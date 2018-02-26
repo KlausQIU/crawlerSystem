@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block header%}
+<title>功能列表</title>
+{% endblock %}
+
+{% block content %}
+{% with model_name='Menu' url_prefix='/system/menu/menu_'  %}
+
+<script src="/static/js/treetable/jquery.treetable.js"></script>
+<!-- <script src="/static/js/treetable/jquery.treegrid.js"></script> -->
+<link href="/static/css/treetable/jquery.treetable.css" rel="stylesheet">
+
+<script type="text/javascript">
+	function add{{model_name}}(ele){
+		menu_edit()
+	}
+	function edit{{model_name}}(ele){
+		menu_edit(ele)
+	}
+	function remove{{model_name}}(ele){
+		if (confirmRandom('确定删除吗?')){
+			window.location.href = "{{url_prefix}}remove?"+$('#{{model_name}}_area :checkbox').serialize()
+		}
+	}
+
+	function menu_edit(event){
+        var fatherBody = $(window.top.document.body);
+        fatherBody.find("#temp_modal>#_menu_modal").remove()
+
+        if(!event){
+        	//新建
+        	$("#menu_modal").find(".modal-title").text("添加");
+        	$("#menu_modal").find("input").val("");
+        }else{
+			$("#menu_modal").find(".modal-title").text($(event).attr("data_name"));
+			$("#menu_modal").find("input[name='name']").val($(event).attr("data_name"));
+			if(!!$(event).attr("data_parent-id")){
+				$("#menu_modal").find("input[name='parent']").val($(event).attr("data_parent-id"));
+			}else{
+				$("#menu_modal").find("input[name='parent']").val("顶级");
+			}
+			$("#menu_modal").find("input[name='name']").val($(event).attr("data_name"));
+			$("#menu_modal").find("input[name='path']").val($(event).attr("data_url"));
+			$("#menu_modal").find("input[name='icon']").val($(event).attr("data_icon"));
+		}
+
+		var _menu_modal = $("#menu_modal").clone()
+		_menu_modal.attr("id","_menu_modal")
+		// $("#menu_modal").appendTo(fatherBody)
+		fatherBody.find("#temp_modal").prepend(_menu_modal)
+		fatherBody.append("<div id='backdropId' class='modal-backdrop fade in'></div>");
+		fatherBody.find("#_menu_modal").modal('show');
+	}
+
+	function saveModal(event){
+		debugger;
+	}
+</script>
+
+<div class="modal fade" tabindex="-1" role="dialog"  id="menu_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"></h4>
+      </div>
+      <div class="modal-body">
+      	<form class="form-horizontal">
+      		<div id="editTagConfig" class="modal-body">
+                <table id="tags-table" class="table table-condensed table-bordered table-striped table-hover">
+	                <tbody>
+	                  <tr class="">
+	                  	<th>模块名称</th><td><input type="text" name="name"></td>
+	                  </tr>
+	                  <tr class="">
+	                  	<th>父级</th><td><input type="text" name="parent"></td>
+	                  </tr>
+	                  <tr class="">
+	                  	<th>菜单显示：</th>
+						<td>
+						<input type="checkbox" name="is_show" value="1"  {%ifequal menu.is_show 1%} checked="checked"{%endifequal%}/>
+						<!-- <label class="inline">
+							<input type="checkbox" value="1" {%ifequal menu.is_show 1%} checked="checked"{%endifequal%} offval="No" id="stock" name="is_show" role="checkbox" class="FormElement ace ace-switch ace-switch-5"><span class="lbl"></span>
+						</label> -->
+						</td>
+	                  </tr>
+	                  <tr class="">
+	                  	<th>模块路径</th><td><input type="text" name="path" size=50 max_length=30></td>
+	                  </tr>
+	                  <tr class="">
+	                  	<th>模块图标</th><td><input type="text" name="icon"></td>
+	                  </tr>
+	                </tbody>
+	            </table>
+            </div>
+            </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" id="closeModal" onclick='$("#backdropId").remove();'>关闭</button>
+        <button type="button" class="btn btn-primary" id="saveModal" onclick="saveModal(this)" data_url="{{url_prefix}}save">保存配置</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="bar"></div>
+<ul id="nav-list" class="nav nav-tabs">
+	  <li class="active">
+	  	<a href="{{url_prefix}}list" >模块列表</a>
+	  </li>
+</ul>
+
+<div class="treetable-toolbar">
+	<div class="row">
+			<div class="col-sm-3"></div>
+			<div class="col-sm-9">
+				<div class="table_toolbar">
+				<div class="btn-toolbar pull-right">
+					<div class="btn-group ">
+						<a class="btn btn-sm btn-success " onclick="add{{model_name}}(this)">
+							<i class="icon-plus-sign"></i>添加
+						</a>
+					</div>
+					<div class="btn-group">
+						
+						<a class="btn btn-sm btn-primary " onclick="edit{{model_name}}(this)">
+							<i class="icon-edit"></i>编辑
+						</a>
+						<a data-toggle="dropdown" class="btn btn-sm  btn-primary dropdown-toggle">
+							<span class="fa fa-caret-down "></span>
+						</a>
+						<ul class="dropdown-menu">
+							<li>
+								<a  onclick="remove{{model_name}}(this)">
+									<i class="fa fa-trash "></i>
+									删除
+								</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+				</div>
+			</div>
+	</div>
+	<table id="{{model_name}}_table" class="table treetable" data-group-by-index='[4,5]'>
+		<thead>
+		<tr>
+			<th >
+				<input type="checkbox" checkbox-area='{{model_name}}_area'  >
+				<a href="javascript:;" onclick="$(this).closest('.treetable').treetable('expandAll'); return false;">展开</a> 
+				<a href="javascript:;" onclick="$(this).closest('.treetable').treetable('collapseAll'); return false;">收缩</a> 
+				模块名
+
+			</th>
+			<th>路径</th>
+			<th>排序</th>
+			<th>日志</th>
+
+		</tr>
+		</thead>
+		<tbody id="{{model_name}}_area">
+		{%for item in list_record %}
+			<tr data-tt-id="{{item.tt_id}}" data-tt-parent-id="{{item.tt_parent_id}}" trid='{{item.id}}' >
+				<td>
+					<input type="checkbox"  value="{{item.id}}" name="id">
+					{%if item.icon%}<i class="{{item.icon}}" /></i>{%endif%}
+					<b style="{{item.css}}" >
+					<a href="javascript:;" onclick="menu_edit(this)" data_name="{{item.name}}" data_id="{{item.id}}"
+					data_icon="{{item.icon}}" data_parent-id="{{item.tt_parent_id}}" data_tt-id="{{item.tt_id}}" data_url="{{item.url}}" data_isShow="{{item.is_show}}">
+					{{item.name}}
+					</b>
+				</td>
+				<td>{{item.url}}</td>
+				<td>{{item.order}}</td>
+				<td>
+					{{item.is_log}}
+				</td>
+
+			</tr>
+		{%endfor%}
+		</tbody>
+	</table>
+</div>
+<script type="text/javascript">
+	$(document).ready(function(){
+		$('.treetable').treetable();
+		$('.treetable').treetable("collapseAll");
+	})
+</script>
+{% endwith %}
+{% endblock %}

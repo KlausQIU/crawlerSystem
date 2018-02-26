@@ -1,0 +1,4 @@
+.event_wrap .middle_line{position:absolute;left:50%;top:0;width:8px;margin-left: 0px;border-left: 1px solid #000;height:100%;}
+.event_wrap .middle_line i{display:block;height:3.31%;border-bottom: 1px solid #000;width:60%;}
+.event_wrap .middle_line i.first{padding-top: 75px;}
+.event_wrap .middle_line i.last{margin-bottom: 25px;}

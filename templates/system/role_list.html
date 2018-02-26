@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block header%}
+<title>用户列表</title>
+{% endblock %}
+
+{% block content %}
+{% with model_name='Admin' url_prefix='/system/admin/admin_' %}
+<div >
+	<ul id="nav-list" class="nav nav-tabs" >
+			  <li  >
+			  	<a href="{{url_prefix}}list">用户列表</a>
+			  </li>
+			  <li class="active">
+			  	<a href="/system/role/role_list" data-toggle="tab">角色列表</a>
+			  </li>
+	</ul>
+	<!-- 按钮工具条 -->
+	<div id='datatable_toolbar'>
+		<div class="btn-toolbar pull-right">
+			<div class="btn-group ">
+				<a class="btn btn btn-success " onclick="add{{model_name}}(this)">
+					<i class="fa fa-plus-square"></i>添加
+				</a>
+			</div>
+			<div class="btn-group">
+				
+				<a class="btn btn btn-primary " onclick="edit{{model_name}}(this)">
+					<i class="fa fa-edit"></i>编辑
+				</a>
+				<a data-toggle="dropdown" class="btn btn-primary dropdown-toggle">
+					<span class="menu-arrow arrow_carrot-down"></span>
+				</a>
+				<ul class="dropdown-menu">
+					<li>
+						<a  class="" onclick="remove{{model_name}}(this)">
+							<i class="fa fa-trash-o"></i> 删除
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<span class="clear"></span>
+	<!--  -->
+	<table class="table table-striped table-advance table-hover table-bordered datatable" data-toolbar='datatable_toolbar' data-group-by-index='[3]'>
+		<thead>
+		<tr trid='{{item.id}}'>
+			<th width="60">
+				<input type="checkbox"  checkbox-area='{{model_name}}_area'  >
+			</th>
+			<th >ID</th>
+			<th>角色名</th>
+			<th>角色类型</th>
+
+		</tr>
+		</thead>
+		<tbody id="{{model_name}}_area">
+		{%for item in list_record%}
+		<tr trid='{{item.id}}'>
+			<td>
+				<input type="checkbox"  value="{{item.id}}" name="id">
+			</td>
+			<td>{{item.id}}</td>
+			<td title="{{item.remark}}"><a href="{{url_prefix}}edit?id={{item.id}}" class="openDialog">{{item.name}}</a></td>
+			<td>{{item.get_type_display}}</td>
+		</tr>
+		{%endfor%}
+		</tbody>
+	</table>
+</div>
+{%endwith%}
+{% endblock %}

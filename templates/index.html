@@ -1,0 +1,282 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{title.0}}  {{title.1}}</title>
+    
+    {% include "header.html"%}
+    {% block header %} {% endblock %}
+    <script type="text/javascript">   
+      $(document).ready(function(){
+        var menu_list = [{%for item in list_menu%}{"id":"{{item.id}}","parent_id":"{{item.parent_id}}","name":"{{item.name}}","url":"{{item.url}}","icon":"{{item.icon}}","css":"{{item.css}}"},{%endfor%}{}];
+
+        function Menu(menu_list){
+          var This = this
+          var main_menu_ul = $('#sidebar>ul.sidebar-menu')
+
+          this.make_menu_list = function(parent_id) {
+            if ( typeof (menu_list) == 'undefined') return;
+            var str = "";
+            for (var i = 0; i < menu_list.length; i++) {
+              var item = menu_list[i];
+              if (!item.name || item.parent_id != parent_id)
+                continue;
+
+              if(item.name == "首页"){
+                str += '<li class="active">'
+              }else{
+                str += '<li class="sub-menu">'
+              }
+              
+              if(!item.icon &&item.parent_id=="0"){
+                item.icon = 'icon_house_alt'
+              }
+              var icon = item.icon ? '<i class="'+item.icon+'"></i>' : ''
+              var item_name = icon +'<span>' + item.name +'</span>'
+              var sub_menu_str = This.make_menu_list(item.id)
+              var item_url = item.url ? item.url : "javascript:;"
+              var item_a 
+              if (sub_menu_str!=''){
+                  item_a = '<a item_id="'+ item.id +'" pid="' + item.parent_id+'" style="'+ item.css +'" href="' + item_url + '"  title="' + item.name + '"  class="" >'  +  item_name  + '<span class="menu-arrow arrow_carrot-right"></span></a><ul class="sub" style="overflow:hidden;display:none;">' + sub_menu_str +'</ul>';
+              }else{
+                item_a = '<a item_id="'+ item.id +'" pid="' + item.parent_id+'" style="'+ item.css +'" href="' + item_url + '"  title="' + item.name + '" >' + item_name + '</a>';
+              }
+              str += item_a
+              str += '</li>'
+            }
+            return str;
+          }
+
+          this.load_menu_list = function(){
+            main_menu_ul.html(This.make_menu_list('0'))
+          }
+        }
+
+        try{
+          m = new Menu(menu_list)
+          m.load_menu_list()
+          //$('#menu-cont').height(window.screen.availHeight)
+        }catch(e){
+          art.dialog.alert('菜单获取失败!');
+        }
+
+        // tab菜单
+        function TabConcent(ul_id,connect_id){
+          var This = this
+          var tab_ul = $('#'+ul_id)
+          var tab_connect = $('#'+connect_id)
+          var active_iframe = null
+
+          this.add_tab = function(a_obj){
+            var _a_obj = $(a_obj)
+            var _url = _a_obj.attr('href') ? _a_obj.attr('href') : _a_obj.attr('url')
+            _url = _url ? _url : '#'
+            if (_url!='#' && _url && _url.indexOf('javascript')<0){
+              var _url_id = _url.replace(/[\/\?&="']/g, "_");
+              
+              var _iframe_obj = $('#'+_url_id)
+              if (_iframe_obj.length==0){
+                var _text = _a_obj.text()
+                var _iframe = $("<iframe frameborder='0' width='100%' height='100%' src='" + _url + "' id='" + _url_id + "'onload='$(this).height($(this).contents().find(\"body\").height()+300);'  name='" + _url_id + "' ></iframe>")
+                var _tab_li = $('<li>',{"class":'btn btn-xs btn-success',title:'双击关闭!','iframe_id':_url_id,
+                  click:function(){return !This.add_tab(a_obj)},
+                  dblclick:function(){This.close_tab(_iframe)},
+                  })
+                var _tab_a = $('<a>',{style:"color:white",href:_url,'html':_text})
+
+                _tab_li.append($('<a>',{href:"#",html:'<i class="icon-refresh"></i>',click:function(){
+                  window.frames[_url_id].location.reload()
+                }}))
+                
+                _tab_li.append(_tab_a)
+
+                _tab_li.append($('<a>',{href:"#",html:'<i class="red icon-remove"></i>',click:function(){
+                  This.close_tab(_iframe)
+                }}))
+                tab_ul.append(_tab_li)
+                tab_connect.append(_iframe)
+                _iframe_obj = _iframe
+                
+              } 
+              
+              This.active_tab(_iframe_obj)
+              if (_a_obj.attr('id')=='home-page') {
+                _iframe_obj.tab_li.remove()
+              }
+              return true
+            }
+            return false
+          }
+          this.close_tab = function(_iframe_obj){
+            _iframe_obj.remove()
+            _iframe_obj.tab_li.remove()
+            var last_iframe = tab_connect.find('iframe:last')
+            if (last_iframe.length!=0){
+              This.active_tab(last_iframe)
+            }
+            
+          }
+          this.resize_iframe = function() {
+            var iframe_ele =$('#'+active_iframe.attr('id'))
+            var _height = iframe_ele.contents().find('body').height()
+            //console.dir(iframe_ele)
+            console.dir(_height)
+            
+            if ( Math.abs(_height-iframe_ele.height() ) >0 || (Math.abs(_height-iframe_ele.height())> _height * 0.2) ){
+                tab_connect.height(_height+50)
+                iframe_ele.height(_height+50)
+                
+            }
+
+            console.dir(iframe_ele.height())
+          }
+
+          this.active_tab = function(_iframe_obj){
+              if ( active_iframe && active_iframe!==_iframe_obj) {
+                active_iframe.tab_li.removeClass('btn-success')
+                active_iframe.hide()
+              }
+              _iframe_obj.show()
+              var iframe_id = _iframe_obj.attr('id')
+              _iframe_obj.tab_li = $('[iframe_id="' + iframe_id + '"]')
+              _iframe_obj.tab_li.addClass('btn-success')
+              active_iframe = _iframe_obj
+              This.resize_iframe()
+
+            }
+          }
+            $(document).on('click','.sidebar-menu a,#home-page',function(e){
+              // var is_tab = tab_concent.add_tab(this)
+              var _a_obj = $(this)
+              var _url = _a_obj.attr('href') ? _a_obj.attr('href') : _a_obj.attr('url')
+              _url = _url ? _url : '#'
+              if(_url == "/index" || _url == "javascript:;" || _url == "#"){
+                return 
+              }else{
+                e.preventDefault()
+                $("#main-iframe").attr("src",_url)
+                $(".classify").text(_a_obj.text())
+            }
+            })
+
+        })
+
+        function saveModal(event){
+          debugger;
+          //统一提交给后端的ajax
+          var e = $(event);
+          var url = e.attr("data_url");
+          var data = e.parent("div").prev().find("form").serialize();
+          $.ajax({
+            type: 'POST',
+            url: url,
+            data: data,
+            success: function(msg){
+              debugger;
+            }
+          })
+        }
+      
+    </script>
+    <script src="/static/js/scripts.js"></script>
+  </head>
+
+  <body>
+  <div id="temp_modal"></div>
+  <!-- container section start -->
+  <section id="container" class="">
+    <div>
+      <header class="header dark-bg">
+            <div class="toggle-nav">
+                <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+            </div>
+
+            <!--logo start-->
+
+            <a href="/index" class="logo"> {{title.0}} <span class="lite">  {{title.1}}</span></a>
+            <!--logo end-->
+
+            <!-- <div class="nav search-row" id="top_menu"> -->
+                <!--  search form start -->
+               <!--  <ul class="nav top-menu">                    
+                    <li>
+                        <form class="navbar-form">
+                            <input class="form-control" placeholder="Search" type="text">
+                        </form>
+                    </li>                    
+                </ul> -->
+                <!--  search form end -->                
+            <!-- </div> -->
+
+            <div class="top-nav notification-row">                
+                <!-- notificatoin dropdown start-->
+                <ul class="nav pull-right top-menu">
+                    <!-- user login dropdown start-->
+                    <li class="dropdown">
+                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                            <span class="profile-ava">
+                                <img alt="" src="/static/img/avatar/{{request.admin.username}}.jpg">
+                            </span>
+                            <span class="username">{{request.admin.alias}}</span>
+                            <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu extended logout">
+                            <div class="log-arrow-up"></div>
+                            <li>
+                                <a href="#"><i class="icon_clock_alt"></i> Timeline</a>
+                            </li>
+                            <li>
+                                <a href="#"><i class="icon_chat_alt"></i> 图表</a>
+                            </li>
+                            <li>
+                                <a href="/logout"><i class="icon_key_alt"></i> Log Out</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- user login dropdown end -->
+                </ul>
+                <!-- notificatoin dropdown end-->
+            </div>
+      </header>     
+      </div> 
+      <!--header end-->
+
+      <!--sidebar start-->
+      <div class="main-content" id="main-container">
+        <div class="main-container-inner">
+          <a class="menu-toggler" id="menu-toggler" href="#">
+            <span class="menu-text"></span>
+          </a>
+
+      <aside>
+          <div id="sidebar"  class="nav-collapse">
+              <!-- sidebar menu start-->
+              <ul class="sidebar-menu"></ul>
+
+          </div>
+      </aside>
+      <section id="main-content">
+          <section class="wrapper"> 
+            <div class="row">
+              <div class="col-lg-12">
+                <h3 class="page-header classify"><i class="fa fa-laptop"></i>{{classify}}</h3>
+                <ol class="breadcrumb">
+                  <li><i class="fa fa-home"></i><a href="/index">首页</a></li>
+                  <li class="classify"><i class="fa fa-laptop"></i>{{classify}}</li>                
+                </ol>
+              </div>
+            </div>
+            <div>
+            <iframe id="main-iframe" frameborder='0' width="100%" src="/timeline" scrolling="auto" style="overflow-x:hidden;" onload='$(this).height($(this).contents().find("body").height()+300);'>
+            </iframe>
+        </div>
+          </section>
+      <!--main content end-->
+  </section>
+  <!-- container section start -->
+
+
+  </body>
+
+
+</html>
